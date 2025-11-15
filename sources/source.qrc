@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/toolbox">
+        <file>toolboxs/space.png</file>
+        <file>toolboxs/tasks.png</file>
+    </qresource>
+</RCC>
