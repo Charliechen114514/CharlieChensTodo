@@ -4,6 +4,7 @@
 #include "NasaAPOD/nasaapodattrwidget.h"
 #include "NasaAPOD/nasaapodfetcher.h"
 #include "button.h"
+#include "defaultimagehandler.h"
 #include "floatinglabelhelper.h"
 #include "helpers/animations/appearanimation.h"
 #include <QFutureWatcher>
@@ -31,7 +32,9 @@ void MainPageWidget::init_core() {
 }
 
 void MainPageWidget::init_ui() {
-	QHBoxLayout* layout = new QHBoxLayout(this);
+	default_handler = new DefaultImageHandler(this);
+	QHBoxLayout* layout
+	    = new QHBoxLayout(this);
 	cover_widget = new CCImageWidget(this);
 	cover_widget->setScale_mode(CCImageWidget::Cover);
 	layout->addWidget(cover_widget);
@@ -49,10 +52,18 @@ void MainPageWidget::init_ui() {
 	    = new CCWidgetLibrary::animation::AppearAnimation(main_label_helper);
 	floats_main_animation->apply_config({ QEasingCurve::InOutCubic, 600 });
 	flushMainPage();
+	auto datas = default_handler->getRandomAPOD();
+	handle_data(datas);
 }
 
 void MainPageWidget::init_connections() {
 	floatings_widget->installEventFilter(this);
+	connect(default_handler, &DefaultImageHandler::postStatus,
+	        this, &MainPageWidget::postStatus);
+	connect(default_handler, &DefaultImageHandler::requested_date,
+	        this, &MainPageWidget::flushMainPage);
+	connect(default_handler, &DefaultImageHandler::request_show_default,
+	        this, &MainPageWidget::handle_show_default);
 	connect(floatings_widget, &QPushButton::clicked,
 	        this, [this]() {
 		        if (main_label_helper->isVisible()) {
@@ -82,9 +93,11 @@ bool MainPageWidget::eventFilter(QObject* watched, QEvent* event) {
 	return QWidget::eventFilter(watched, event);
 }
 
-void MainPageWidget::flushMainPage() {
+void MainPageWidget::flushMainPage(QDate request_date) {
 	title_label_helper->displayBusyText();
 	main_label_helper->displayBusyText();
+	fetcher->setDate(request_date);
+	emit postStatus("Flushing the date: " + request_date.toString() + "...");
 	auto future = fetcher->factorized();
 	watcher->setFuture(future);
 }
@@ -92,12 +105,31 @@ void MainPageWidget::flushMainPage() {
 void MainPageWidget::applyToToolBox(CCToolBox* toolbox,
                                     QStackedWidget* stacked_widget,
                                     QMap<int, int>& index_mappings) {
-	NasaAPODAttrWidget* widget = new NasaAPODAttrWidget(this);
+	QWidget* container = new QWidget(this);
+	QVBoxLayout* v = new QVBoxLayout(container);
+	v->addWidget(default_handler);
+	NasaAPODAttrWidget* widget
+	    = new NasaAPODAttrWidget(this);
+	v->addWidget(widget);
 	connect(this, &MainPageWidget::update_nasa_data,
 	        widget, &NasaAPODAttrWidget::update_self_info);
+
 	stacked_widget->insertWidget(0, this);
-	toolbox->insertItem(0, widget, QIcon(":/toolbox/toolboxs/space.png"), "MainPage");
+	toolbox->insertItem(0, container, QIcon(":/toolbox/toolboxs/space.png"), "MainPage");
 	index_mappings.insert(0, 0);
+}
+
+QString MainPageWidget::getDefault_image_folder() const {
+	return default_handler->getImageFolder();
+}
+
+void MainPageWidget::setDefault_image_folder(const QString& newDefault_image_folder) {
+	if (newDefault_image_folder == default_handler->getImageFolder()) {
+		return;
+	}
+
+	default_handler->setImageFolder(newDefault_image_folder);
+	emit request_update_imageFolderPath("default_cover_folder", newDefault_image_folder, true);
 }
 
 void MainPageWidget::resizeEvent(QResizeEvent* event) {
@@ -107,7 +139,9 @@ void MainPageWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void MainPageWidget::handle_failed() {
-	qDebug() << "Error Occurs";
+	qDebug() << "Error Occurs when attempting fetching, get from defaults";
+	auto datas = default_handler->getRandomAPOD();
+	handle_data(datas);
 }
 
 void MainPageWidget::
@@ -119,6 +153,11 @@ void MainPageWidget::
 	updateFloatingPos();
 	main_label_helper->auto_adjust_text_color(cover_widget);
 	title_label_helper->auto_adjust_text_color(cover_widget);
+}
+
+void MainPageWidget::handle_show_default(const QDate& d) {
+	auto datas = default_handler->getRandomAPOD();
+	handle_data(datas);
 }
 
 void MainPageWidget::updateFloatingPos() {

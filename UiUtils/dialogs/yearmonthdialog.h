@@ -23,9 +23,7 @@ private slots:
 	void updateOkState();
 
 private:
-	QCheckBox* yearCheck;
 	QSpinBox* yearSpin_;
-	QCheckBox* month_check;
 	QSpinBox* month_spin;
 
 	CCLabel* fileLabel_;

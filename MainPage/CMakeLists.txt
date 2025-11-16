@@ -11,6 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
 add_library(MainPage STATIC
   mainpagewidget.cpp
   mainpagewidget.h
@@ -19,6 +21,8 @@ add_library(MainPage STATIC
   NasaAPOD/NasaAPODData.h
   floatinglabelhelper.h floatinglabelhelper.cpp
   NasaAPOD/nasaapodattrwidget.h NasaAPOD/nasaapodattrwidget.cpp
+  defaultimagehandler.h defaultimagehandler.cpp
+  init/apoddatadefault.h init/apoddatadefault.cpp
 )
 
 target_link_libraries(MainPage PRIVATE
@@ -26,6 +30,7 @@ target_link_libraries(MainPage PRIVATE
   Qt${QT_VERSION_MAJOR}::Widgets
   CCWidgets)
 target_link_libraries(MainPage PUBLIC Utilities UiUtils)
+target_link_libraries(MainPage PRIVATE Qt6::Widgets)
 
 target_include_directories(MainPage PUBLIC .)
 target_compile_definitions(MainPage PRIVATE MAINPAGE_LIBRARY)

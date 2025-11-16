@@ -1,11 +1,40 @@
 #include "taskfieldsidewidget.h"
 #include "CCButton/button.h"
+#include <QMessageBox>
 #include <QVBoxLayout>
+
 TaskFieldSideWidget::TaskFieldSideWidget(QWidget* parent)
     : QWidget { parent } {
 	QVBoxLayout* sum_layout = new QVBoxLayout(this);
+
 	CCButton* add_btn = new CCButton("Add New +", this);
+	add_btn->setFixedHeight(70);
+	add_btn->setMaximumWidth(200);
 	sum_layout->addWidget(add_btn);
+
+	CCButton* remove_btn = new CCButton("Delete Current Plan", this);
+	sum_layout->addWidget(remove_btn);
+	remove_btn->setFixedHeight(70);
+	remove_btn->setMaximumWidth(200);
+	connect(remove_btn, &QPushButton::clicked, this,
+	        [this]() {
+		        if (currentField_.isEmpty()) {
+			        QMessageBox::critical(this,
+			                              "No field select!",
+			                              "No Field is Selected!");
+			        return;
+		        }
+
+		        auto ret = QMessageBox::question(
+		            this,
+		            tr("Delete item"),
+		            tr("Are you sure to delete this field plan?"));
+
+		        if (ret == QMessageBox::Yes) {
+			        emit request_erase_current_plan(currentField_);
+		        }
+	        });
+
 	connect(add_btn, &QPushButton::clicked,
 	        this, &TaskFieldSideWidget::request_new_field_add);
 	v = new QVBoxLayout;

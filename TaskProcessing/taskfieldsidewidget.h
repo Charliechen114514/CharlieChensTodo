@@ -18,6 +18,7 @@ public:
 signals:
 	void fieldClicked(const QString& field);
 	void request_new_field_add();
+	void request_erase_current_plan(const QString& field);
 
 private:
 	void clearButtons();

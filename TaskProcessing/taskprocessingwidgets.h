@@ -9,8 +9,11 @@ class TaskSideWidget;
 class TaskRecordsHelpers;
 class TaskFieldSideWidget;
 class UiEventHandler;
+class TaskMonthySideWidget;
+class ExtractedProgressTreeWidget;
 
 class TaskProcessingWidgets : public QWidget, IPagedWidget {
+	Q_OBJECT
 public:
 	explicit TaskProcessingWidgets(QWidget* parent = nullptr);
 	~TaskProcessingWidgets() override;
@@ -31,11 +34,16 @@ public slots:
 	 */
 	void parse_markdowns(const QString& markdown_bytes);
 signals:
+	void postStatus(const QString& status);
 
 private slots:
-
 	void handle_date_request(QDate date);
 	void handle_field_request(QString field);
+	void handle_monthy_request(int id);
+
+	void erase_date_request(QDate date);
+	void erase_field_request(QString field);
+	void erase_monthy_request(int id);
 
 	void onNewFieldsTask(const QString field, std::shared_ptr<TaskRecords> t);
 	void onNewDateTask(const QDate date, std::shared_ptr<TaskRecords> t);
@@ -47,7 +55,9 @@ private:
 	UiEventHandler* ui_handler;
 	TaskRecordsHelpers* helpers;
 	TaskSideWidget* sideWidget;
+	TaskMonthySideWidget* monthy_widget;
 	TaskFieldSideWidget* fieldWidget;
+	ExtractedProgressTreeWidget* progress_tree;
 	CCTreeWidget* task_lists_displays;
 };
 

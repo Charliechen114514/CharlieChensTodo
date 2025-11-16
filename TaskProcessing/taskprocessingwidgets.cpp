@@ -1,9 +1,11 @@
 #include "taskprocessingwidgets.h"
 #include "CCToolBox/cctoolbox.h"
 #include "Composers/CCTreeWidget/cctreewidget.h"
+#include "extractedprogresstreewidget.h"
 #include "parser_adapter/markdownparser.h"
 #include "task_recordings/taskrecordshelpers.h"
 #include "taskfieldsidewidget.h"
+#include "taskmonthysidewidget.h"
 #include "tasksidewidget.h"
 #include "ui_event/uieventhandler.h"
 #include "url_reader.h"
@@ -17,20 +19,33 @@ TaskProcessingWidgets::TaskProcessingWidgets(QWidget* parent)
 	ui_handler = new UiEventHandler(this);
 	sideWidget = new TaskSideWidget(this);
 	fieldWidget = new TaskFieldSideWidget(this);
+	monthy_widget = new TaskMonthySideWidget(this);
 	task_lists_displays = new CCTreeWidget(this);
 	task_lists_displays->setHeaderLabel("Todays Task");
 	task_lists_displays->setColumnCount(1);
+	progress_tree = new ExtractedProgressTreeWidget(task_lists_displays, this);
 	QHBoxLayout* mainView = new QHBoxLayout(this);
 	mainView->addWidget(task_lists_displays);
 	connect(sideWidget, &TaskSideWidget::dateUserRequest,
 	        this, &TaskProcessingWidgets::handle_date_request);
 	connect(sideWidget, &TaskSideWidget::request_new_date_add,
 	        ui_handler, &UiEventHandler::openDateDialog);
+	connect(sideWidget, &TaskSideWidget::request_erase_current_plan,
+	        this, &TaskProcessingWidgets::erase_date_request);
 
 	connect(fieldWidget, &TaskFieldSideWidget::request_new_field_add,
 	        ui_handler, &UiEventHandler::openFieldsDialog);
 	connect(fieldWidget, &TaskFieldSideWidget::fieldClicked,
 	        this, &TaskProcessingWidgets::handle_field_request);
+	connect(fieldWidget, &TaskFieldSideWidget::request_erase_current_plan,
+	        this, &TaskProcessingWidgets::erase_field_request);
+
+	connect(monthy_widget, &TaskMonthySideWidget::request_new_monthy_plan_add,
+	        ui_handler, &UiEventHandler::openMonthyDialog);
+	connect(monthy_widget, &TaskMonthySideWidget::monthyUserRequest,
+	        this, &TaskProcessingWidgets::handle_monthy_request);
+	connect(monthy_widget, &TaskMonthySideWidget::request_erase_current_plan,
+	        this, &TaskProcessingWidgets::erase_monthy_request);
 
 	connect(ui_handler, &UiEventHandler::newFieldsTask,
 	        this, &TaskProcessingWidgets::onNewFieldsTask);
@@ -64,11 +79,18 @@ void TaskProcessingWidgets::applyToToolBox(
 	    QIcon(":/toolbox/toolboxs/tasks.png"),
 	    "Field Tasks");
 
-	// toolbox->insertItem(1, sideWidget, QIcon(":/toolbox/toolboxs/tasks.png"), "Field Sessions");
+	toolbox->insertItem(3, monthy_widget,
+	                    QIcon(":/toolbox/toolboxs/tasks.png"),
+	                    "Monthy Sessions");
+
+	toolbox->insertItem(4, progress_tree,
+	                    QIcon(":/toolbox/toolboxs/tasks.png"),
+	                    "Progress");
 
 	index_mappings.insert(1, 1);
 	index_mappings.insert(2, 1);
-	// index_mappings.insert(3, 1);
+	index_mappings.insert(3, 1);
+	index_mappings.insert(4, 1);
 }
 
 void TaskProcessingWidgets::parse_markdowns(const QString& markdown_bytes) {
@@ -80,6 +102,23 @@ void TaskProcessingWidgets::parse_markdowns(const QString& markdown_bytes) {
 }
 
 void TaskProcessingWidgets::handle_date_request(QDate date) {
+	qDebug() << "Activate Date: " << date;
+	rewrite_current_file();
+	auto task = helpers->getDate(date);
+	if (!task) {
+		qWarning() << "Failed to find the task, as the date has non plan!";
+		task_lists_displays->clear();
+		emit postStatus("No Plan for today!");
+		return;
+	}
+	current_file_path = task->getTaskFilePath();
+	try {
+		parse_markdowns(cutils::readFromLocalPath(task->getTaskFilePath()));
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "Can not handle!", "Can not handle session: " + task->getTaskFilePath() + " due to" + e.what());
+		helpers->removeDate(date);
+		return;
+	}
 }
 
 void TaskProcessingWidgets::handle_field_request(QString field) {
@@ -104,25 +143,100 @@ void TaskProcessingWidgets::handle_field_request(QString field) {
 	fieldWidget->selectField(field);
 }
 
-void TaskProcessingWidgets::onNewFieldsTask(const QString field, std::shared_ptr<TaskRecords> t) {
+void TaskProcessingWidgets::handle_monthy_request(int id) {
+	qDebug() << "Activate MonthID: " << id;
+	rewrite_current_file();
+	auto task = helpers->getMonth(id);
+	if (!task) {
+		task_lists_displays->clear();
+		emit postStatus("No Plan for This Month!");
+		return;
+	}
+	current_file_path = task->getTaskFilePath();
+	try {
+		parse_markdowns(cutils::readFromLocalPath(task->getTaskFilePath()));
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "Can not handle!", "Can not handle session: " + task->getTaskFilePath() + " due to" + e.what());
+		helpers->removeMonth(id);
+		return;
+	}
+}
 
+void TaskProcessingWidgets::erase_date_request(QDate date) {
+	qDebug() << "Request delete date: " << date;
+	auto task = helpers->getDate(date);
+	if (!task) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! No Plans for today");
+		return;
+	}
+
+	if (!helpers->removeDate(date)) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! Internal Error!");
+		return;
+	}
+	task_lists_displays->clear();
+	current_file_path.clear();
+}
+
+void TaskProcessingWidgets::erase_field_request(QString field) {
+	qDebug() << "Request delete field: " << field;
+	auto task = helpers->getField(field);
+	if (!task) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! No Plans for today");
+		return;
+	}
+
+	if (!helpers->removeField(field)) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! Internal Error!");
+		return;
+	}
+	task_lists_displays->clear();
+	fieldWidget->removeField(field);
+	current_file_path.clear();
+}
+
+void TaskProcessingWidgets::erase_monthy_request(int id) {
+	qDebug() << "Request delete MonthID: " << id;
+	auto task = helpers->getMonth(id);
+	if (!task) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! No Plans for today");
+		return;
+	}
+
+	if (!helpers->removeMonth(id)) {
+		QMessageBox::critical(this, "Failed To delete", "Can not delete! Internal Error!");
+		return;
+	}
+	task_lists_displays->clear();
+	current_file_path.clear();
+}
+
+void TaskProcessingWidgets::onNewFieldsTask(const QString field, std::shared_ptr<TaskRecords> t) {
 	qDebug() << "Field Add " << field << t->getTaskFilePath();
 	rewrite_current_file();
 	// Add to the taskHelpers
 	helpers->registerField(field, t);
 	current_file_path = t->getTaskFilePath();
 	// OK, parse from the task handler
-	parse_markdowns(cutils::readFromLocalPath(t->getTaskFilePath()));
-
+	parse_markdowns(cutils::readFromLocalPath(current_file_path));
 	fieldWidget->addField(field);
 }
 
 void TaskProcessingWidgets::onNewDateTask(const QDate date, std::shared_ptr<TaskRecords> t) {
 	qDebug() << "date Add " << date << t->getTaskFilePath();
+	rewrite_current_file();
+	helpers->registerDate(date, t);
+	current_file_path = t->getTaskFilePath();
+	// OK, parse from the task handler
+	parse_markdowns(cutils::readFromLocalPath(current_file_path));
 }
 
 void TaskProcessingWidgets::onNewMonthyTask(const int month, std::shared_ptr<TaskRecords> t) {
 	qDebug() << "Month Magic Add " << month << t->getTaskFilePath();
+	rewrite_current_file();
+	helpers->registerMonth(month, t);
+	current_file_path = t->getTaskFilePath();
+	parse_markdowns(cutils::readFromLocalPath(current_file_path));
 }
 
 void TaskProcessingWidgets::rewrite_current_file() {
@@ -148,6 +262,7 @@ void TaskProcessingWidgets::rewrite_current_file() {
 void TaskProcessingWidgets::setTaskHelpers(TaskRecordsHelpers* helpers) {
 	this->helpers = helpers;
 	fieldWidget->setFields(helpers->allFields());
+	handle_date_request(QDate::currentDate());
 }
 
 void TaskProcessingWidgets::preview_drug(const QUrl& file_path) {

@@ -36,21 +36,31 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
     qt_add_executable(CharliesTodo
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         sources/source.qrc
         init_session.cpp
         interfaces/IPagedWidget.h
+        init/todopreinithelper.h init/todopreinithelper.cpp
+        init/todoinititem.h init/todoinititem.cpp
     )
 else()
     add_executable(CharliesTodo
         ${PROJECT_SOURCES})
 endif()
 
+if(WIN32)
+    target_sources(CharliesTodo PRIVATE resources.rc)
+endif()
+
 target_link_libraries(CharliesTodo
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets CCWidgets
     PUBLIC MainPage TaskProcessingWidgets)
+target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
+target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.CharliesTodo)

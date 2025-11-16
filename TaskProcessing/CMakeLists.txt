@@ -13,6 +13,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 add_library(TaskProcessingWidgets STATIC
   taskprocessingwidgets.cpp
@@ -26,11 +29,17 @@ add_library(TaskProcessingWidgets STATIC
   inits/taskiniter.h inits/taskiniter.cpp
   taskfieldsidewidget.h taskfieldsidewidget.cpp
   ui_event/uieventhandler.h ui_event/uieventhandler.cpp
+  inits/databasepreinit.h inits/databasepreinit.cpp
+  taskmonthysidewidget.h taskmonthysidewidget.cpp
+  extractedprogresstreewidget.h extractedprogresstreewidget.cpp
 )
 
 target_link_libraries(TaskProcessingWidgets
   PRIVATE Qt${QT_VERSION_MAJOR}::Widgets CCWidgets Utilities Qt${QT_VERSION_MAJOR}::Sql UiUtils)
 target_link_libraries(TaskProcessingWidgets PRIVATE Qt6::Core)
+target_link_libraries(TaskProcessingWidgets PRIVATE Qt6::Widgets)
+target_link_libraries(TaskProcessingWidgets PRIVATE Qt6::Widgets)
+target_link_libraries(TaskProcessingWidgets PRIVATE Qt6::Widgets)
 
 target_include_directories(TaskProcessingWidgets PRIVATE .)
 target_compile_definitions(TaskProcessingWidgets PRIVATE TASKPROCESSINGWIDGETS_LIBRARY)

@@ -2,6 +2,7 @@
 #define MAINPAGEWIDGET_H
 #include "../interfaces/IPagedWidget.h"
 #include "NasaAPOD/NasaAPODData.h"
+#include <QDateTime>
 #include <QFutureWatcher>
 #include <QWidget>
 
@@ -11,6 +12,7 @@ class NasaAPODFetcher;
 namespace CCWidgetLibrary::animation {
 class AppearAnimation;
 }
+class DefaultImageHandler;
 class CCToolBox;
 class CCImageWidget;
 class FloatingLabelHelper;
@@ -22,13 +24,18 @@ class MainPageWidget : public QWidget, IPagedWidget {
 public:
 	explicit MainPageWidget(QWidget* parent = nullptr);
 	~MainPageWidget();
-	void flushMainPage();
+	void flushMainPage(QDate request_date = QDate::currentDate());
 	void applyToToolBox(CCToolBox* toolbox,
 	                    QStackedWidget* stacked_widget,
 	                    QMap<int, int>& index_mappings) override;
 
+	QString getDefault_image_folder() const;
+	void setDefault_image_folder(const QString& newDefault_image_folder);
+
 signals:
 	void update_nasa_data(const MainPage::nasa_apod::NasaAPODData& data);
+	void request_update_imageFolderPath(const QString key, const QVariant& v, bool request_update_now);
+	void postStatus(const QString&);
 
 protected:
 	void resizeEvent(QResizeEvent* event) override;
@@ -37,6 +44,7 @@ protected:
 private:
 	void handle_failed();
 	void handle_data(const MainPage::nasa_apod::NasaAPODData& data);
+	void handle_show_default(const QDate& d);
 	void updateFloatingPos();
 
 private: // init field
@@ -45,6 +53,7 @@ private: // init field
 	void init_connections();
 
 private:
+	DefaultImageHandler* default_handler;
 	using DataFuture_t = std::optional<MainPage::nasa_apod::NasaAPODData>;
 	QFutureWatcher<DataFuture_t>* watcher;
 	CCImageWidget* cover_widget;

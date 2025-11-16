@@ -3,8 +3,8 @@
 #include "CCToolBox/cctoolbox.h"
 #include "TaskProcessing/taskprocessingwidgets.h"
 #include "TaskProcessing/ui_event/uieventhandler.h"
+#include "init/todopreinithelper.h"
 #include "mainpagewidget.h"
-#include "url_reader.h"
 #include <QDragEnterEvent>
 #include <QFile>
 #include <QMimeData>
@@ -26,8 +26,18 @@ void TodoMainWindow::setTaskHandler(TaskRecordsHelpers* helpers) {
 	taskWidget->setTaskHelpers(helpers);
 }
 
+void TodoMainWindow::setIniter(ToDoPreInitHelper* initer) {
+	this->initer = initer;
+	late_init_for_initer();
+}
+
 TodoMainWindow::~TodoMainWindow() {
 	delete ui;
+}
+
+void TodoMainWindow::updateIniter(const QString key, const QVariant& v, bool request_update_now) {
+	qDebug() << "Update: " << key << " to: " << v;
+	initer->update(key, v, request_update_now);
 }
 
 void TodoMainWindow::dragEnterEvent(QDragEnterEvent* event) {
@@ -53,7 +63,7 @@ void TodoMainWindow::setup_toolbox_panel() {
 }
 
 void TodoMainWindow::setup_main_page() {
-	MainPageWidget* mainPageWidget = new MainPageWidget(ui->stackedWidget);
+	mainPageWidget = new MainPageWidget(ui->stackedWidget);
 	mainPageWidget->applyToToolBox(box, ui->stackedWidget, index_mappings);
 }
 
@@ -68,6 +78,15 @@ void TodoMainWindow::init_connections() {
 		ui->stackedWidget->setCurrentIndex(mappings);
 	});
 
+	connect(taskWidget, &TaskProcessingWidgets::postStatus,
+	        this, [this](const QString& st) {
+		        ui->statusbar->showMessage(st);
+	        });
+	connect(mainPageWidget, &MainPageWidget::postStatus,
+	        this, [this](const QString& st) {
+		        ui->statusbar->showMessage(st);
+	        });
+
 	UiEventHandler* event_handler = taskWidget->ui_event_handler();
 	auto con_actions = [=](QAction* act, void (UiEventHandler::*action)(void)) {
 		connect(act, &QAction::triggered, event_handler, action);
@@ -76,4 +95,14 @@ void TodoMainWindow::init_connections() {
 	con_actions(ui->action_addNewDate, &UiEventHandler::openDateDialog);
 	con_actions(ui->action_addNewField, &UiEventHandler::openFieldsDialog);
 	con_actions(ui->action_addNewMonthy, &UiEventHandler::openMonthyDialog);
+}
+
+void TodoMainWindow::late_init_for_initer() {
+	auto res = initer->query("default_cover_folder");
+	if (!res.isValid()) {
+		qDebug() << "Not a valid covers...";
+		return;
+	} else {
+		mainPageWidget->setDefault_image_folder(res.toString());
+	}
 }

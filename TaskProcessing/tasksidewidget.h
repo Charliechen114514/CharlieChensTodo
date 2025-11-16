@@ -13,6 +13,7 @@ public:
 signals:
 	void request_new_date_add();
 	void dateUserRequest(QDate date);
+	void request_erase_current_plan(QDate date);
 
 private:
 	CCTextField* quotes_fields;

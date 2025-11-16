@@ -12,6 +12,8 @@ class CCToolBox;
 class UiEventHandler;
 class TaskProcessingWidgets;
 class TaskRecordsHelpers;
+class MainPageWidget;
+class ToDoPreInitHelper;
 
 class TodoMainWindow : public QMainWindow {
 	Q_OBJECT
@@ -20,7 +22,10 @@ public:
 	TodoMainWindow(QWidget* parent = nullptr);
 	void late_init();
 	void setTaskHandler(TaskRecordsHelpers* helpers);
+	void setIniter(ToDoPreInitHelper* initer);
 	~TodoMainWindow();
+public slots:
+	void updateIniter(const QString key, const QVariant& v, bool request_update_now);
 
 protected:
 	void dragEnterEvent(QDragEnterEvent* event) override;
@@ -31,9 +36,12 @@ private:
 	void setup_main_page();
 	void setup_task_page();
 	void init_connections();
+	void late_init_for_initer();
 
 private:
+	ToDoPreInitHelper* initer;
 	Ui::TodoMainWindow* ui;
+	MainPageWidget* mainPageWidget;
 	TaskProcessingWidgets* taskWidget;
 	CCToolBox* box;
 	QMap<int, int> index_mappings;
