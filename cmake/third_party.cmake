@@ -30,3 +30,15 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(PlanParser)
 
+set(CCLoggerPlace ${CMAKE_SOURCE_DIR}/third_party/cclogger)
+message("Installing CCLogger Source to the ${CCLoggerPlace}")
+
+FetchContent_Declare(
+    CCLoggerLibrary
+    GIT_REPOSITORY https://github.com/CCUtilCommons/CCLogger.git
+    GIT_TAG        main
+    SOURCE_DIR     ${CCLoggerPlace}
+)
+
+FetchContent_MakeAvailable(CCLoggerLibrary)
+

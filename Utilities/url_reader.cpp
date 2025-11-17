@@ -25,9 +25,8 @@ void cutils::truncate_write(const QString& path, const QString& bytes) {
 		throw std::runtime_error("Can not handle file: " + path.toStdString());
 	}
 
-	// 将整个 Markdown 输出写回
 	QTextStream out(&f);
-	out.setEncoding(QStringConverter::Utf8); // Qt6 设置 UTF-8
+	out.setEncoding(QStringConverter::Utf8);
 	out << bytes;
 
 	return;

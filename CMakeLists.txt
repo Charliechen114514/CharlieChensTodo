@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(CharliesTodo VERSION 0.1 LANGUAGES CXX)
-
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>"
+                    "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
@@ -38,6 +37,7 @@ set(PROJECT_SOURCES
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
     qt_add_executable(CharliesTodo
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
@@ -46,6 +46,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
         interfaces/IPagedWidget.h
         init/todopreinithelper.h init/todopreinithelper.cpp
         init/todoinititem.h init/todoinititem.cpp
+        loggy/loggerbackend.h loggy/loggerbackend.cpp
     )
 else()
     add_executable(CharliesTodo
@@ -58,8 +59,7 @@ endif()
 
 target_link_libraries(CharliesTodo
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets CCWidgets
-    PUBLIC MainPage TaskProcessingWidgets)
-target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
+    PUBLIC MainPage TaskProcessingWidgets CCLogger)
 target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)

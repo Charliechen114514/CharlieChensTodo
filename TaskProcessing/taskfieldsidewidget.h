@@ -22,6 +22,7 @@ signals:
 
 private:
 	void clearButtons();
+	CCButton* newButton(const QString& text);
 
 private:
 	QVBoxLayout* v;

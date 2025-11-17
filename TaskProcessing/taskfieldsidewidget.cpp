@@ -3,6 +3,15 @@
 #include <QMessageBox>
 #include <QVBoxLayout>
 
+namespace {
+void configButton(CCButton* button) {
+	button->setCheckable(true);
+	button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	button->setCursor(Qt::PointingHandCursor);
+	button->setFixedHeight(50);
+}
+}
+
 TaskFieldSideWidget::TaskFieldSideWidget(QWidget* parent)
     : QWidget { parent } {
 	QVBoxLayout* sum_layout = new QVBoxLayout(this);
@@ -44,22 +53,25 @@ TaskFieldSideWidget::TaskFieldSideWidget(QWidget* parent)
 	sum_layout->addLayout(v);
 }
 
+CCButton* TaskFieldSideWidget::newButton(const QString& text) {
+	CCButton* btn = new CCButton(text, this);
+	configButton(btn);
+
+	connect(btn, &QPushButton::clicked, this, [this, btn]() {
+		selectField(btn->text());
+		emit fieldClicked(btn->text());
+	});
+
+	buttons_.insert(text, btn);
+	return btn;
+}
+
 void TaskFieldSideWidget::setFields(const QStringList& l) {
 	clearButtons();
 
 	for (const QString& f : l) {
-		CCButton* btn = new CCButton(f, this);
-		btn->setCheckable(true);
-		btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-		btn->setCursor(Qt::PointingHandCursor);
-
-		connect(btn, &QPushButton::clicked, this, [this, f]() {
-			selectField(f);
-			emit fieldClicked(f);
-		});
-
+		CCButton* btn = newButton(f);
 		v->addWidget(btn);
-		buttons_.insert(f, btn);
 	}
 
 	v->addStretch(1);
@@ -68,19 +80,9 @@ void TaskFieldSideWidget::setFields(const QStringList& l) {
 void TaskFieldSideWidget::addField(const QString& field) {
 	if (buttons_.contains(field))
 		return;
-
-	CCButton* btn = new CCButton(field, this);
-	btn->setCheckable(true);
-	btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-	btn->setCursor(Qt::PointingHandCursor);
-
-	connect(btn, &QPushButton::clicked, this, [this, field]() {
-		selectField(field);
-		emit fieldClicked(field);
-	});
-
-	v->insertWidget(v->count() - 1, btn); // 保证 stretch 在最后
-	buttons_.insert(field, btn);
+	CCButton* btn = newButton(field);
+	// promise the last one is always stretch
+	v->insertWidget(v->count() - 1, btn);
 }
 
 void TaskFieldSideWidget::removeField(const QString& field) {
@@ -110,7 +112,7 @@ void TaskFieldSideWidget::selectField(const QString& field) {
 		btn->ensurePolished();
 		btn->update();
 	} else {
-		qDebug() << "TaskFieldSideWidget::selectField: unknown field" << field;
+		qWarning() << "TaskFieldSideWidget::selectField: unknown field" << field;
 	}
 
 	currentField_ = field;
