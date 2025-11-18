@@ -4,6 +4,8 @@
 #include "TaskProcessing/taskprocessingwidgets.h"
 #include "TaskProcessing/ui_event/uieventhandler.h"
 #include "init/todopreinithelper.h"
+#include "loggy/loggerbackend.h"
+#include "loggy/uiwindow/loggersubwindow.h"
 #include "mainpagewidget.h"
 #include <QDragEnterEvent>
 #include <QFile>
@@ -13,9 +15,11 @@ TodoMainWindow::TodoMainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::TodoMainWindow) {
 	ui->setupUi(this);
+	resize(1024, 800);
 }
 
 void TodoMainWindow::late_init() {
+	setup_self();
 	setup_toolbox_panel();
 	setup_main_page();
 	setup_task_page();
@@ -35,6 +39,13 @@ TodoMainWindow::~TodoMainWindow() {
 	delete ui;
 }
 
+void TodoMainWindow::open_logger_window() {
+	if (loggerWindow)
+		loggerWindow->openMe();
+	else
+		qWarning() << "LoggerWindow Instance NULL";
+}
+
 void TodoMainWindow::updateIniter(const QString key, const QVariant& v, bool request_update_now) {
 	qDebug() << "Update: " << key << " to: " << v;
 	initer->update(key, v, request_update_now);
@@ -49,6 +60,21 @@ void TodoMainWindow::dropEvent(QDropEvent* event) {
 	const auto urls = event->mimeData()->urls();
 	taskWidget->preview_drug(urls.last());
 	event->acceptProposedAction();
+}
+
+void TodoMainWindow::setup_self() {
+	loggerWindow = new LoggerSubWindow(this);
+	const auto filePaths = LoggerBackend::instance().loggerPath();
+	if (filePaths.empty()) {
+		qWarning() << "No logger path registers, subwindow will not open...";
+		return;
+	}
+
+	if (filePaths.size() != 1) {
+		qWarning() << "Multi Loggers detcted, so the first one will be used";
+	}
+
+	loggerWindow->register_monitor_window(filePaths[0]);
 }
 
 void TodoMainWindow::setup_toolbox_panel() {
@@ -95,6 +121,8 @@ void TodoMainWindow::init_connections() {
 	con_actions(ui->action_addNewDate, &UiEventHandler::openDateDialog);
 	con_actions(ui->action_addNewField, &UiEventHandler::openFieldsDialog);
 	con_actions(ui->action_addNewMonthy, &UiEventHandler::openMonthyDialog);
+	connect(ui->action_open_logger, &QAction::triggered,
+	        this, &TodoMainWindow::open_logger_window);
 }
 
 void TodoMainWindow::late_init_for_initer() {

@@ -6,9 +6,10 @@
 void initSession(TodoMainWindow* w);
 
 int main(int argc, char* argv[]) {
-	auto& logger_instance = LoggerBackend::instance();
-	logger_instance.addLoggerFilePath("logger/logger" + QDateTime::currentDateTime().toString() + ".txt");
 	QApplication a(argc, argv);
+	auto& logger_instance = LoggerBackend::instance();
+	logger_instance.addLoggerFilePath("logger/logger" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + ".txt");
+
 	TodoMainWindow w;
 	initSession(&w);
 	w.show();

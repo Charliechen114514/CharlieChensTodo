@@ -70,22 +70,30 @@ NasaAPODData NasaAPODFetcher::make_components(QNetworkReply& reply) {
 	QUrl resolved = handled_url.resolved({ mainImageUrl });
 	image_fetcher->setUrl(resolved);
 
-	auto image_future = image_fetcher->factorized().result();
-	if (!image_future) {
-		throw APODDataRequestFailed("Image Request Failed!");
+	try {
+		auto image_future = image_fetcher->factorized().result();
+		if (!image_future) {
+			throw APODDataRequestFailed("Image Request Failed!");
+		}
+
+		QPixmap image_result = image_future.value();
+		if (image_result.isNull()) {
+			throw APODDataRequestFailed("Image Request Success, but the image is invalid!");
+		}
+
+		NasaAPODData data;
+		data.image_url = mainImageUrl;
+		data.image = std::move(image_result);
+		data.descriptions = explanation;
+		data.title = title;
+
+		return data;
+	} catch (const std::exception& e) {
+		qWarning() << "APOD make_components exception:" << e.what();
+		return {};
+	} catch (...) {
+		qWarning() << "APOD make_components unknown exception";
+		return {};
 	}
-
-	QPixmap image_result = image_future.value();
-	if (image_result.isNull()) {
-		throw APODDataRequestFailed("Image Request Success, but the image is invalid!");
-	}
-
-	NasaAPODData data;
-	data.image_url = mainImageUrl;
-	data.image = std::move(image_result);
-	data.descriptions = explanation;
-	data.title = title;
-
-	return data;
 }
 }

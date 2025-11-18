@@ -2,6 +2,7 @@
 #define LOGGERBACKEND_H
 #include <QMessageLogger>
 #include <QMutex>
+#include <QStringList>
 
 namespace Clog {
 class CCLogger;
@@ -10,7 +11,16 @@ class CCLogger;
 class LoggerBackend {
 public:
 	static LoggerBackend& instance();
-	void addLoggerFilePath(const QString& p);
+
+	enum class SupportFormat {
+		Simplified,
+		Standard,
+		OnlyContent
+	};
+
+	void addLoggerFilePath(const QString& p,
+	                       const SupportFormat format = SupportFormat::Simplified);
+	QStringList loggerPath() const { return loggers_local_path; }
 	~LoggerBackend();
 
 private:
@@ -24,7 +34,7 @@ private:
 		instance().qtToCCLoggerHandler(type, context, msg);
 	}
 	QtMessageHandler old_handler;
-
+	QStringList loggers_local_path;
 	Clog::CCLogger* logger;
 	QMutex m;
 	QMutex log_self;

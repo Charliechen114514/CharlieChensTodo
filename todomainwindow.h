@@ -9,6 +9,7 @@ class TodoMainWindow;
 QT_END_NAMESPACE
 
 class CCToolBox;
+class LoggerSubWindow;
 class UiEventHandler;
 class TaskProcessingWidgets;
 class TaskRecordsHelpers;
@@ -24,6 +25,8 @@ public:
 	void setTaskHandler(TaskRecordsHelpers* helpers);
 	void setIniter(ToDoPreInitHelper* initer);
 	~TodoMainWindow();
+	void open_logger_window();
+
 public slots:
 	void updateIniter(const QString key, const QVariant& v, bool request_update_now);
 
@@ -32,6 +35,7 @@ protected:
 	void dropEvent(QDropEvent* event) override;
 
 private:
+	void setup_self();
 	void setup_toolbox_panel();
 	void setup_main_page();
 	void setup_task_page();
@@ -39,6 +43,7 @@ private:
 	void late_init_for_initer();
 
 private:
+	LoggerSubWindow* loggerWindow;
 	ToDoPreInitHelper* initer;
 	Ui::TodoMainWindow* ui;
 	MainPageWidget* mainPageWidget;

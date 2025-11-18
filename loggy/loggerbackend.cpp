@@ -1,10 +1,13 @@
 #include "loggerbackend.h"
 #include "CCLogger.hpp"
+#include "formater/simplify_formarter.h"
+#include "formater/standard_formater.h"
 #include "io/fileio.h"
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QLoggingCategory>
 
 namespace {
 inline Clog::CCLoggerLevel convertLevel(QtMsgType type) {
@@ -27,6 +30,7 @@ inline Clog::CCLoggerLevel convertLevel(QtMsgType type) {
 
 LoggerBackend::LoggerBackend() {
 	logger = new Clog::CCLogger;
+	QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
 	old_handler = qInstallMessageHandler(LoggerBackend::__qtToCCLoggerHandler);
 }
 
@@ -35,7 +39,7 @@ LoggerBackend& LoggerBackend::instance() {
 	return b;
 }
 
-void LoggerBackend::addLoggerFilePath(const QString& p) {
+void LoggerBackend::addLoggerFilePath(const QString& p, const SupportFormat format) {
 	QFileInfo info(p);
 	QDir dir = info.dir();
 
@@ -46,13 +50,39 @@ void LoggerBackend::addLoggerFilePath(const QString& p) {
 		}
 	}
 	QFile f(p);
-	if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-		qWarning() << "Can not clean file: " + p.toStdString()
-		           << "Loggers will append!";
+	if (!f.open(QIODevice::WriteOnly
+	            | QIODevice::Truncate
+	            | QIODevice::Text)) {
+		qWarning() << "Cannot create file:" << p
+		           << "=>" << f.errorString().toUtf8();
+		return;
 	}
+
 	f.close();
+
+	qInfo() << "Select the Formats type: " << static_cast<int>(format);
+	std::unique_ptr<Clog::LoggerFormatter> formater {};
+
+	switch (format) {
+	case SupportFormat::Simplified:
+		formater = std::make_unique<Clog::SimplifiedFormater>();
+		break;
+	case SupportFormat::Standard:
+		formater = std::make_unique<Clog::StandardFormater>();
+		break;
+	case SupportFormat::OnlyContent:
+		formater = std::make_unique<Clog::BlankFormater>();
+		break;
+	default:
+		formater = std::make_unique<Clog::SimplifiedFormater>();
+		break;
+	}
+
 	QMutexLocker _(&m);
-	logger->registerIOBackEnd(std::make_unique<Clog::FileLoggerIO>(p.toStdString()));
+	logger->registerIOBackEnd(
+	    std::make_unique<Clog::FileLoggerIO>(p.toStdString()),
+	    std::move(formater));
+	loggers_local_path.emplaceBack(p);
 }
 
 LoggerBackend::~LoggerBackend() {

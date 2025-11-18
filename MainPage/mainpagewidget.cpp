@@ -22,7 +22,8 @@ void MainPageWidget::init_core() {
 	watcher = new QFutureWatcher<DataFuture_t>(this);
 	connect(watcher, &QFutureWatcher<DataFuture_t>::finished, this, [this]() {
 		DataFuture_t result = watcher->future().result();
-		if (!result) {
+		if (!result || result->image_url == "") {
+			emit postStatus("Result fetched failed!");
 			handle_failed();
 		} else {
 			handle_data(*result);
