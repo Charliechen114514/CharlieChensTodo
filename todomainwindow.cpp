@@ -3,9 +3,11 @@
 #include "CCToolBox/cctoolbox.h"
 #include "TaskProcessing/taskprocessingwidgets.h"
 #include "TaskProcessing/ui_event/uieventhandler.h"
+#include "formater/simplify_formarter.h"
 #include "init/todopreinithelper.h"
 #include "loggy/loggerbackend.h"
 #include "loggy/uiwindow/loggersubwindow.h"
+#include "loggy/uiwindow/loggerwindowbackend.h"
 #include "mainpagewidget.h"
 #include <QDragEnterEvent>
 #include <QFile>
@@ -64,17 +66,15 @@ void TodoMainWindow::dropEvent(QDropEvent* event) {
 
 void TodoMainWindow::setup_self() {
 	loggerWindow = new LoggerSubWindow(this);
-	const auto filePaths = LoggerBackend::instance().loggerPath();
-	if (filePaths.empty()) {
-		qWarning() << "No logger path registers, subwindow will not open...";
-		return;
-	}
+	auto windowBackend = std::make_unique<LoggerWindowBackend>();
 
-	if (filePaths.size() != 1) {
-		qWarning() << "Multi Loggers detcted, so the first one will be used";
-	}
+	connect(windowBackend.get(), &LoggerWindowBackend::append_logger,
+	        loggerWindow, &LoggerSubWindow::appendLogger);
 
-	loggerWindow->register_monitor_window(filePaths[0]);
+	auto windowFormater = std::make_unique<Clog::SimplifiedFormater>();
+
+	LoggerBackend::instance().registerIOBackEnd(std::move(windowBackend),
+	                                            std::move(windowFormater));
 }
 
 void TodoMainWindow::setup_toolbox_panel() {

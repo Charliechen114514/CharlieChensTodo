@@ -2,22 +2,19 @@
 #define LOGGERSUBWINDOW_H
 
 #include <QMainWindow>
-class CCTextField;
+class QTextBrowser;
 class QFileSystemWatcher;
 
 class LoggerSubWindow : public QMainWindow {
 	Q_OBJECT
 public:
 	explicit LoggerSubWindow(QWidget* parent = nullptr);
-	void register_monitor_window(const QString& f);
 	void openMe();
-private slots:
-	void onReloadFile(const QString& path);
+public slots:
+	void appendLogger(const QString& logger);
 
 private:
-	QFileSystemWatcher* watcher;
-	CCTextField* field;
-	QString monitoring_logger_path;
+	QTextBrowser* field;
 };
 
 #endif // LOGGERSUBWINDOW_H

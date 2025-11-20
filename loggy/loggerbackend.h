@@ -1,11 +1,15 @@
 #ifndef LOGGERBACKEND_H
 #define LOGGERBACKEND_H
+#include "formater.h"
+#include "logger_io.h"
 #include <QMessageLogger>
 #include <QMutex>
+#include <QObject>
 #include <QStringList>
-
+class LoggerWindowBackend;
 namespace Clog {
 class CCLogger;
+class LoggerIO;
 }
 
 class LoggerBackend {
@@ -21,6 +25,8 @@ public:
 	void addLoggerFilePath(const QString& p,
 	                       const SupportFormat format = SupportFormat::Simplified);
 	QStringList loggerPath() const { return loggers_local_path; }
+	void registerIOBackEnd(std::unique_ptr<Clog::LoggerIO> backend,
+	                       std::unique_ptr<Clog::LoggerFormatter> formater);
 	~LoggerBackend();
 
 private:
@@ -33,6 +39,7 @@ private:
 	                                  const QString& msg) {
 		instance().qtToCCLoggerHandler(type, context, msg);
 	}
+	LoggerWindowBackend* loggerWindowBackend;
 	QtMessageHandler old_handler;
 	QStringList loggers_local_path;
 	Clog::CCLogger* logger;

@@ -39,6 +39,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
     qt_add_executable(CharliesTodo
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
@@ -49,6 +51,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
         init/todoinititem.h init/todoinititem.cpp
         loggy/loggerbackend.h loggy/loggerbackend.cpp
         loggy/uiwindow/loggersubwindow.h loggy/uiwindow/loggersubwindow.cpp
+        loggy/uiwindow/loggerwindowbackend.h loggy/uiwindow/loggerwindowbackend.cpp
+
     )
 else()
     add_executable(CharliesTodo
@@ -64,6 +68,8 @@ target_link_libraries(CharliesTodo
     PUBLIC MainPage TaskProcessingWidgets CCLogger)
 target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
 target_link_libraries(CharliesTodo PRIVATE Qt6::Widgets)
+target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
+target_link_libraries(CharliesTodo PRIVATE Qt6::Core)
 
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.CharliesTodo)

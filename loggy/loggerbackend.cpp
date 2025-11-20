@@ -26,6 +26,23 @@ inline Clog::CCLoggerLevel convertLevel(QtMsgType type) {
 	return Clog::CCLoggerLevel::Info;
 }
 
+std::unique_ptr<Clog::LoggerFormatter>
+get_formater(const LoggerBackend::SupportFormat format) {
+	switch (format) {
+	case LoggerBackend::SupportFormat::Simplified:
+		return std::make_unique<Clog::SimplifiedFormater>();
+		break;
+	case LoggerBackend::SupportFormat::Standard:
+		return std::make_unique<Clog::StandardFormater>();
+		break;
+	case LoggerBackend::SupportFormat::OnlyContent:
+		return std::make_unique<Clog::BlankFormater>();
+		break;
+	default:
+		return std::make_unique<Clog::SimplifiedFormater>();
+		break;
+	}
+}
 }
 
 LoggerBackend::LoggerBackend() {
@@ -61,28 +78,20 @@ void LoggerBackend::addLoggerFilePath(const QString& p, const SupportFormat form
 	f.close();
 
 	qInfo() << "Select the Formats type: " << static_cast<int>(format);
-	std::unique_ptr<Clog::LoggerFormatter> formater {};
-
-	switch (format) {
-	case SupportFormat::Simplified:
-		formater = std::make_unique<Clog::SimplifiedFormater>();
-		break;
-	case SupportFormat::Standard:
-		formater = std::make_unique<Clog::StandardFormater>();
-		break;
-	case SupportFormat::OnlyContent:
-		formater = std::make_unique<Clog::BlankFormater>();
-		break;
-	default:
-		formater = std::make_unique<Clog::SimplifiedFormater>();
-		break;
-	}
+	std::unique_ptr<Clog::LoggerFormatter> formater = get_formater(format);
 
 	QMutexLocker _(&m);
 	logger->registerIOBackEnd(
 	    std::make_unique<Clog::FileLoggerIO>(p.toStdString()),
 	    std::move(formater));
 	loggers_local_path.emplaceBack(p);
+}
+
+void LoggerBackend::registerIOBackEnd(std::unique_ptr<Clog::LoggerIO> backend, std::unique_ptr<Clog::LoggerFormatter> formater) {
+	QMutexLocker _(&m);
+	logger->registerIOBackEnd(
+	    std::move(backend),
+	    std::move(formater));
 }
 
 LoggerBackend::~LoggerBackend() {
