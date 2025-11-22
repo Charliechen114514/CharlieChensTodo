@@ -1,14 +1,14 @@
 #include "tasksidewidget.h"
+#include "CCCalendarWidget/cccalendarwidget.h"
 #include "CCTextField/cctextfield.h"
 #include "button.h"
 #include "cclabel.h"
-#include <QCalendarWidget>
 #include <QMessageBox>
 #include <QVBoxLayout>
 
 TaskSideWidget::TaskSideWidget(QWidget* parent)
     : QWidget { parent } {
-	calendar = new QCalendarWidget(this);
+	calendar = new CCCalendarWidget(this);
 	quotes_fields = new CCTextField(this);
 	CCButton* add_btn = new CCButton("Add New+", this);
 	connect(add_btn, &QPushButton::clicked,

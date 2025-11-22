@@ -15,6 +15,7 @@ class TaskProcessingWidgets;
 class TaskRecordsHelpers;
 class MainPageWidget;
 class ToDoPreInitHelper;
+class MarkdownPreviewWindow;
 
 class TodoMainWindow : public QMainWindow {
 	Q_OBJECT
@@ -25,10 +26,11 @@ public:
 	void setTaskHandler(TaskRecordsHelpers* helpers);
 	void setIniter(ToDoPreInitHelper* initer);
 	~TodoMainWindow();
-	void open_logger_window();
 
 public slots:
 	void updateIniter(const QString key, const QVariant& v, bool request_update_now);
+	void open_markdown_preview();
+	void open_logger_window();
 
 protected:
 	void dragEnterEvent(QDragEnterEvent* event) override;
@@ -43,6 +45,7 @@ private:
 	void late_init_for_initer();
 
 private:
+	MarkdownPreviewWindow* preview_markdown;
 	LoggerSubWindow* loggerWindow;
 	ToDoPreInitHelper* initer;
 	Ui::TodoMainWindow* ui;

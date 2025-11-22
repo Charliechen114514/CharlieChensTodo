@@ -18,8 +18,18 @@ namespace cutils {
  */
 QString UTILITIES_EXPORT readFromURL(const QUrl& url);
 
+/**
+ * @brief readFromLocalPath
+ * @return bytes read from local path
+ * @exception runtime_error: file not find or can not read
+ */
 QString UTILITIES_EXPORT readFromLocalPath(const QString& path);
 
+/**
+ * @brief truncate_write clean write
+ * @param path to writes
+ * @param bytes string to write
+ */
 void UTILITIES_EXPORT truncate_write(const QString& path, const QString& bytes);
 }
 

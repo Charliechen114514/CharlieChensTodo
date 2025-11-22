@@ -9,6 +9,7 @@
 #include "loggy/uiwindow/loggersubwindow.h"
 #include "loggy/uiwindow/loggerwindowbackend.h"
 #include "mainpagewidget.h"
+#include "markdown_preview/markdownpreviewwindow.h"
 #include <QDragEnterEvent>
 #include <QFile>
 #include <QMimeData>
@@ -53,6 +54,13 @@ void TodoMainWindow::updateIniter(const QString key, const QVariant& v, bool req
 	initer->update(key, v, request_update_now);
 }
 
+void TodoMainWindow::open_markdown_preview() {
+	if (preview_markdown->setMarkdownDisplayPath(
+	        taskWidget->get_current_file_path())) {
+		preview_markdown->show();
+	}
+}
+
 void TodoMainWindow::dragEnterEvent(QDragEnterEvent* event) {
 	if (event->mimeData()->hasUrls())
 		event->acceptProposedAction();
@@ -65,6 +73,7 @@ void TodoMainWindow::dropEvent(QDropEvent* event) {
 }
 
 void TodoMainWindow::setup_self() {
+	preview_markdown = new MarkdownPreviewWindow(this);
 	loggerWindow = new LoggerSubWindow(this);
 	auto windowBackend = std::make_unique<LoggerWindowBackend>();
 
@@ -121,6 +130,8 @@ void TodoMainWindow::init_connections() {
 	con_actions(ui->action_addNewDate, &UiEventHandler::openDateDialog);
 	con_actions(ui->action_addNewField, &UiEventHandler::openFieldsDialog);
 	con_actions(ui->action_addNewMonthy, &UiEventHandler::openMonthyDialog);
+	connect(ui->action_open_markdown_preview, &QAction::triggered,
+	        this, &TodoMainWindow::open_markdown_preview);
 	connect(ui->action_open_logger, &QAction::triggered,
 	        this, &TodoMainWindow::open_logger_window);
 }

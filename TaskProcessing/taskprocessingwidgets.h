@@ -24,6 +24,8 @@ public:
 	void setTaskHelpers(TaskRecordsHelpers* helpers);
 	void preview_drug(const QUrl& file_path);
 
+	QString get_current_file_path() const { return current_file_path; };
+
 public slots:
 	void collapseAllTasks(); // should be clear
 	void expandAllTasks(); // expand all
